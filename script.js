@@ -40,7 +40,7 @@ let userMarker = L.marker([defaultLat, defaultLon], { icon: customIcon }).addTo(
 
 
 // ==========================================
-// 3. ระบบระบุตำแหน่ง (Self-Healing GPS Tracking สไตล์ Navigation App)
+// 3. ระบบระบุตำแหน่ง (Self-Healing GPS + Fallback)
 // ==========================================
 function fetchWeatherData(lat, lon) {
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -71,19 +71,19 @@ function fetchWeatherData(lat, lon) {
 
 let watchId = null;
 let lastWeatherFetch = 0; 
-let lastLocationTime = 0; // ตัวแปรเก็บเวลาล่าสุดที่รับสัญญาณได้
-let gpsRestarter = null;  // ตัวแปรสำหรับเช็คชีพจร GPS
+let lastLocationTime = 0; 
+let gpsRestarter = null;  
 
 function startRobustTracking() {
     if (!('geolocation' in navigator)) {
+        console.warn("Geolocation is not supported by this browser.");
         fetchWeatherData(defaultLat, defaultLon);
         return;
     }
 
-    // ฟังก์ชันย่อยสำหรับเริ่มจับสัญญาณ GPS
     function initWatch() {
         if (watchId !== null) {
-            navigator.geolocation.clearWatch(watchId); // ล้างตัวเก่าทิ้งก่อน
+            navigator.geolocation.clearWatch(watchId);
         }
         
         watchId = navigator.geolocation.watchPosition(
@@ -92,46 +92,58 @@ function startRobustTracking() {
                 const lon = position.coords.longitude;
                 const now = Date.now();
                 
-                lastLocationTime = now; // อัปเดตเวลาล่าสุดทันทีที่ชิปส่งข้อมูลมา
+                lastLocationTime = now; 
                 
                 userMarker.setLatLng([lat, lon]);
                 map.panTo([lat, lon], { animate: true, duration: 1.0, easeLinearity: 1 });
                 
-                if (now - lastWeatherFetch > 300000) {
+                // ดึงอากาศทันทีที่ได้พิกัดครั้งแรก หรือถ้าผ่านไปเกิน 5 นาที
+                if (lastWeatherFetch === 0 || now - lastWeatherFetch > 300000) {
                     fetchWeatherData(lat, lon);
                     lastWeatherFetch = now;
                 }
             },
             (error) => {
-                // ถ้าสัญญาณหายเข้าอุโมงค์ ไม่ต้องแสดง Error แค่รอให้ Heartbeat ทำงาน
-                console.warn("GPS Signal Drop:", error.message);
+                console.warn("GPS Error:", error.message);
+                // 🛟 FALLBACK: ถ้าจับสัญญาณไม่ได้ ให้โหลดอากาศ default มาโชว์ก่อน หน้าจอจะได้ไม่ค้าง
+                if (lastWeatherFetch === 0) {
+                    fetchWeatherData(defaultLat, defaultLon);
+                    lastWeatherFetch = Date.now();
+                }
             },
-            { 
-                enableHighAccuracy: true, 
-                maximumAge: 0, 
-                timeout: 10000 // เพิ่มเวลา Timeout ให้ชิปดาวเทียมทำงานได้เต็มที่
-            }
+            { enableHighAccuracy: true, maximumAge: 0 }
         );
     }
 
-    // 1. เริ่มจับสัญญาณครั้งแรก
-    initWatch();
+    // สั่งขออนุญาตครั้งแรก ถ้ายอมหรือบล็อก ก็ให้ระบบทำงานต่อทันที
+    navigator.geolocation.getCurrentPosition(
+        () => { initWatch(); }, 
+        (error) => { 
+            console.warn("Initial Location Blocked/Failed. Loading Default...");
+            // 🛟 FALLBACK: โดนบล็อกตั้งแต่แรก ก็โหลด default เลย
+            if (lastWeatherFetch === 0) {
+                fetchWeatherData(defaultLat, defaultLon);
+                lastWeatherFetch = Date.now();
+            }
+            initWatch(); 
+        }, 
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
 
-    // 2. 🛡️ ระบบ Heartbeat (เช็คชีพจรทุก 10 วินาที)
+    // ระบบ Heartbeat เช็คชีพจร GPS ทุก 15 วินาที
     if (gpsRestarter) clearInterval(gpsRestarter);
     gpsRestarter = setInterval(() => {
         const now = Date.now();
-        // ถ้าเคยรับสัญญาณได้แล้ว แต่จู่ๆ นิ่งไปเกิน 10 วินาที (10000 ms)
-        if (lastLocationTime !== 0 && (now - lastLocationTime > 10000)) {
-            console.warn("GPS Stalled! ระบบ Android ตัดการทำงาน... ทำการ Restart GPS ใหม่");
-            initWatch(); // สั่งรีสตาร์ทตัวดึงสัญญาณใหม่ทันที
+        if (lastLocationTime !== 0 && (now - lastLocationTime > 15000)) {
+            console.log("Restarting GPS Receiver...");
+            initWatch(); 
         }
-    }, 10000);
+    }, 15000);
 }
 
 startRobustTracking();
 
-// ป้องกันจอดับและบังคับให้ CPU ทำงานตลอดเวลา (Screen Wake Lock API)
+// ป้องกันจอดับ (Screen Wake Lock API)
 if ('wakeLock' in navigator) {
     let wakeLock = null;
     const requestWakeLock = async () => {
@@ -158,18 +170,15 @@ function openApp(appName) {
     
     switch(appName) {
         case 'settings':
-            // เปิดหน้าตั้งค่าเครื่อง
             window.location.href = 'intent:#Intent;action=android.settings.SETTINGS;end';
             break;
         case 'wifi':
-            // เปิดหน้า Wi-Fi
             window.location.href = 'intent:#Intent;action=android.settings.WIFI_SETTINGS;end';
             break;
         case 'gmail':
             window.location.href = 'mailto:';
             break;
         case 'maps':
-            // เปิด Google Maps
             window.location.href = 'intent://#Intent;package=com.google.android.apps.maps;scheme=https;end';
             break;
         case 'youtube':
@@ -225,11 +234,9 @@ const CALENDAR_IDS = [
 ];
 
 async function fetchCalendarEvents() {
-    // ตั้งค่าเวลาเริ่มต้น (ตอนนี้)
     const now = new Date();
     const timeMinStr = now.toISOString();
 
-    // ตั้งค่าเวลาสิ้นสุด (บวกไปอีก 3 วัน เวลา 23:59:59)
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + 3);
     maxDate.setHours(23, 59, 59, 999);
@@ -240,7 +247,6 @@ async function fetchCalendarEvents() {
 
     try {
         const fetchPromises = CALENDAR_IDS.map(id => {
-            // เพิ่ม &timeMax ลงใน URL เพื่อให้ Google กรองข้อมูลให้ดึงมาแค่ 3 วัน
             const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}/events?key=${CALENDAR_API_KEY}&timeMin=${timeMinStr}&timeMax=${timeMaxStr}&orderBy=startTime&singleEvents=true&maxResults=10`;
             return fetch(url).then(res => res.json());
         });
@@ -267,7 +273,7 @@ async function fetchCalendarEvents() {
             return timeA - timeB;
         });
 
-        const displayEvents = allEvents.slice(0, 8); // โชว์ไม่เกิน 8 รายการเพื่อความสวยงาม
+        const displayEvents = allEvents.slice(0, 8); 
 
         let todayHtml = '';
         let upcomingHtml = '';
