@@ -40,7 +40,7 @@ let userMarker = L.marker([defaultLat, defaultLon], { icon: customIcon }).addTo(
 
 
 // ==========================================
-// 3. ระบบระบุตำแหน่ง (GPS) & ดึงสภาพอากาศ
+// 3. ระบบระบุตำแหน่ง (Smooth GPS Tracking สไตล์ CarPlay)
 // ==========================================
 function fetchWeatherData(lat, lon) {
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -71,90 +71,92 @@ function fetchWeatherData(lat, lon) {
 
 let watchId = null;
 let lastWeatherFetch = 0; 
-let lastLat = 0;
-let lastLon = 0;
 
-function startLocationTracking() {
+function startSmoothTracking() {
     if ('geolocation' in navigator) {
-        const geoOptions = {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        };
-
+        // ใช้ watchPosition เพื่อเปิดช่องรับสัญญาณดาวเทียมค้างไว้ตลอดเวลา
         watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 const now = Date.now();
                 
-                const distanceMoved = Math.abs(lat - lastLat) + Math.abs(lon - lastLon);
-
-                if (distanceMoved > 0.00005 || lastLat === 0) { 
-                    map.panTo([lat, lon], { animate: true, duration: 1 });
-                    userMarker.setLatLng([lat, lon]);
-                    lastLat = lat;
-                    lastLon = lon;
-                }
+                // 1. ขยับหมวดตำแหน่งของคุณทันทีที่ชิป GPS ส่งค่ามา (ปกติคือ 1 ครั้งต่อวินาที)
+                userMarker.setLatLng([lat, lon]);
                 
+                // 2. สั่งให้แผนที่สไลด์ตาม (PanTo) แบบต่อเนื่อง
+                // ใช้ easeLinearity: 1 เพื่อลบความหน่วงตอนจังหวะเบรค ทำให้แผนที่ไหลเนียนเป็นเส้นตรง
+                map.panTo([lat, lon], { 
+                    animate: true, 
+                    duration: 1.0, 
+                    easeLinearity: 1 
+                });
+                
+                // อัปเดตสภาพอากาศทุกๆ 5 นาทีเพื่อประหยัด Data
                 if (now - lastWeatherFetch > 300000) {
                     fetchWeatherData(lat, lon);
                     lastWeatherFetch = now;
-                    console.log("Weather Updated");
                 }
             },
             (error) => {
-                console.warn("GPS Error:", error.message);
+                console.warn("GPS Signal Lost or Error:", error.message);
                 if(lastWeatherFetch === 0) {
                     fetchWeatherData(defaultLat, defaultLon);
                     lastWeatherFetch = Date.now();
                 }
             },
-            geoOptions
+            { 
+                enableHighAccuracy: true, // บังคับดึงสัญญาณจากดาวเทียมเท่านั้น
+                maximumAge: 0, // ไม่เอาพิกัดเก่าที่ค้างในเครื่อง
+                timeout: 5000 
+            }
         );
     } else {
         fetchWeatherData(defaultLat, defaultLon);
     }
 }
 
-startLocationTracking();
+startSmoothTracking();
 
 
 // ==========================================
-// 4. ระบบเปิดแอป (App Launcher / Deep Links สำหรับ Android)
+// 4. ระบบเปิดแอป (Android Intents - LAUNCHER MODE)
 // ==========================================
 function openApp(appName) {
     console.log("Opening App: ", appName);
+    
+    // โครงสร้างบังคับเปิดแอป (เหมือนกดจากหน้าโฮมเครื่อง)
+    const baseIntent = "intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=";
+    
     switch(appName) {
         case 'settings':
-            // เปิดหน้าตั้งค่า (Settings) รวมของเครื่อง
-            window.location.href = 'intent://#Intent;action=android.settings.SETTINGS;end';
+            // เปิดหน้าตั้งค่าของเครื่อง
+            window.location.href = baseIntent + 'com.android.settings;end';
             break;
         case 'wifi':
-            // เปิดหน้าตั้งค่า Wi-Fi โดยตรง
+            // เปิดหน้าการเชื่อมต่อ (ถ้าเข้า Wi-Fi ตรงๆ ไม่ได้ จะเข้าหน้า Connection แทน)
             window.location.href = 'intent://#Intent;action=android.settings.WIFI_SETTINGS;end';
             break;
         case 'gmail':
-            window.location.href = 'intent://#Intent;package=com.google.android.gm;end';
+            window.location.href = baseIntent + 'com.google.android.gm;end';
             break;
         case 'maps':
-            // เปิด Google Maps แบบแอปเต็ม
-            window.location.href = 'intent://#Intent;package=com.google.android.apps.maps;end';
+            window.location.href = baseIntent + 'com.google.android.apps.maps;end';
             break;
         case 'youtube':
-            window.location.href = 'intent://#Intent;package=com.google.android.youtube;end';
+            window.location.href = baseIntent + 'com.google.android.youtube;end';
             break;
         case 'ytmusic':
-            window.location.href = 'intent://#Intent;package=com.google.android.apps.youtube.music;end';
+            window.location.href = baseIntent + 'com.google.android.apps.youtube.music;end';
             break;
         case 'evernote':
-            window.location.href = 'intent://#Intent;package=com.evernote;end';
+            window.location.href = baseIntent + 'com.evernote;end';
             break;
         case 'discord':
-            window.location.href = 'intent://#Intent;package=com.discord;end';
+            window.location.href = baseIntent + 'com.discord;end';
             break;
         default:
-            console.warn("App link not configured yet.");
+            console.warn("App link not configured.");
     }
 }
 
