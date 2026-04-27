@@ -40,7 +40,7 @@ let userMarker = L.marker([defaultLat, defaultLon], { icon: customIcon }).addTo(
 
 
 // ==========================================
-// 3. ระบบระบุตำแหน่ง (Self-Healing GPS + Fallback)
+// 3. ระบบระบุตำแหน่ง (Self-Healing GPS + Fallback แก้ไข Logic สมบูรณ์)
 // ==========================================
 function fetchWeatherData(lat, lon) {
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -81,6 +81,23 @@ function startRobustTracking() {
         return;
     }
 
+    // ฟังก์ชันกลางสำหรับอัปเดตหน้าจอและแผนที่
+    function updateDashboardWithPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const now = Date.now();
+        
+        lastLocationTime = now; 
+        
+        userMarker.setLatLng([lat, lon]);
+        map.panTo([lat, lon], { animate: true, duration: 1.0, easeLinearity: 1 });
+        
+        if (lastWeatherFetch === 0 || now - lastWeatherFetch > 300000) {
+            fetchWeatherData(lat, lon);
+            lastWeatherFetch = now;
+        }
+    }
+
     function initWatch() {
         if (watchId !== null) {
             navigator.geolocation.clearWatch(watchId);
@@ -88,46 +105,35 @@ function startRobustTracking() {
         
         watchId = navigator.geolocation.watchPosition(
             (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const now = Date.now();
-                
-                lastLocationTime = now; 
-                
-                userMarker.setLatLng([lat, lon]);
-                map.panTo([lat, lon], { animate: true, duration: 1.0, easeLinearity: 1 });
-                
-                // ดึงอากาศทันทีที่ได้พิกัดครั้งแรก หรือถ้าผ่านไปเกิน 5 นาที
-                if (lastWeatherFetch === 0 || now - lastWeatherFetch > 300000) {
-                    fetchWeatherData(lat, lon);
-                    lastWeatherFetch = now;
-                }
+                updateDashboardWithPosition(position);
             },
             (error) => {
-                console.warn("GPS Error:", error.message);
-                // 🛟 FALLBACK: ถ้าจับสัญญาณไม่ได้ ให้โหลดอากาศ default มาโชว์ก่อน หน้าจอจะได้ไม่ค้าง
+                console.warn("watchPosition Error/Timeout:", error.message);
                 if (lastWeatherFetch === 0) {
                     fetchWeatherData(defaultLat, defaultLon);
                     lastWeatherFetch = Date.now();
                 }
             },
-            { enableHighAccuracy: true, maximumAge: 0 }
+            // ✅ แก้ไข: เพิ่ม timeout ป้องกันการ Hang บนอุปกรณ์ที่หาสัญญาณ High Accuracy ไม่ได้
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
         );
     }
 
-    // สั่งขออนุญาตครั้งแรก ถ้ายอมหรือบล็อก ก็ให้ระบบทำงานต่อทันที
+    // ✅ แก้ไข Logic: ตอนเปิดแอปครั้งแรก ให้ดึงพิกัดแบบเร็ว (ไม่บังคับ GPS) เพื่อให้ผ่านทันที และสั่งอัปเดตหน้าจอเลย
     navigator.geolocation.getCurrentPosition(
-        () => { initWatch(); }, 
+        (position) => { 
+            updateDashboardWithPosition(position); // โหลดสำเร็จ อัปเดตหน้าจอทันที! ตัวอักษร Fetching จะหายไป
+            initWatch(); // จากนั้นค่อยเปิดโหมด Tracking
+        }, 
         (error) => { 
-            console.warn("Initial Location Blocked/Failed. Loading Default...");
-            // 🛟 FALLBACK: โดนบล็อกตั้งแต่แรก ก็โหลด default เลย
+            console.warn("Initial Location Failed/Blocked. Loading Default...");
             if (lastWeatherFetch === 0) {
                 fetchWeatherData(defaultLat, defaultLon);
                 lastWeatherFetch = Date.now();
             }
             initWatch(); 
         }, 
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+        { enableHighAccuracy: false, maximumAge: 0, timeout: 5000 }
     );
 
     // ระบบ Heartbeat เช็คชีพจร GPS ทุก 15 วินาที
