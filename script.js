@@ -40,7 +40,7 @@ let userMarker = L.marker([defaultLat, defaultLon], { icon: customIcon }).addTo(
 
 
 // ==========================================
-// 3. ระบบระบุตำแหน่ง (Smooth GPS Tracking สไตล์ CarPlay)
+// 3. ระบบระบุตำแหน่ง (Self-Healing GPS Tracking สไตล์ Navigation App)
 // ==========================================
 function fetchWeatherData(lat, lon) {
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -71,52 +71,83 @@ function fetchWeatherData(lat, lon) {
 
 let watchId = null;
 let lastWeatherFetch = 0; 
+let lastLocationTime = 0; // ตัวแปรเก็บเวลาล่าสุดที่รับสัญญาณได้
+let gpsRestarter = null;  // ตัวแปรสำหรับเช็คชีพจร GPS
 
-function startSmoothTracking() {
-    if ('geolocation' in navigator) {
-        // ใช้ watchPosition เพื่อเปิดช่องรับสัญญาณดาวเทียมค้างไว้ตลอดเวลา
+function startRobustTracking() {
+    if (!('geolocation' in navigator)) {
+        fetchWeatherData(defaultLat, defaultLon);
+        return;
+    }
+
+    // ฟังก์ชันย่อยสำหรับเริ่มจับสัญญาณ GPS
+    function initWatch() {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId); // ล้างตัวเก่าทิ้งก่อน
+        }
+        
         watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 const now = Date.now();
                 
-                // 1. ขยับหมวดตำแหน่งของคุณทันทีที่ชิป GPS ส่งค่ามา (ปกติคือ 1 ครั้งต่อวินาที)
+                lastLocationTime = now; // อัปเดตเวลาล่าสุดทันทีที่ชิปส่งข้อมูลมา
+                
                 userMarker.setLatLng([lat, lon]);
+                map.panTo([lat, lon], { animate: true, duration: 1.0, easeLinearity: 1 });
                 
-                // 2. สั่งให้แผนที่สไลด์ตาม (PanTo) แบบต่อเนื่อง
-                // ใช้ easeLinearity: 1 เพื่อลบความหน่วงตอนจังหวะเบรค ทำให้แผนที่ไหลเนียนเป็นเส้นตรง
-                map.panTo([lat, lon], { 
-                    animate: true, 
-                    duration: 1.0, 
-                    easeLinearity: 1 
-                });
-                
-                // อัปเดตสภาพอากาศทุกๆ 5 นาทีเพื่อประหยัด Data
                 if (now - lastWeatherFetch > 300000) {
                     fetchWeatherData(lat, lon);
                     lastWeatherFetch = now;
                 }
             },
             (error) => {
-                console.warn("GPS Signal Lost or Error:", error.message);
-                if(lastWeatherFetch === 0) {
-                    fetchWeatherData(defaultLat, defaultLon);
-                    lastWeatherFetch = Date.now();
-                }
+                // ถ้าสัญญาณหายเข้าอุโมงค์ ไม่ต้องแสดง Error แค่รอให้ Heartbeat ทำงาน
+                console.warn("GPS Signal Drop:", error.message);
             },
             { 
-                enableHighAccuracy: true, // บังคับดึงสัญญาณจากดาวเทียมเท่านั้น
-                maximumAge: 0, // ไม่เอาพิกัดเก่าที่ค้างในเครื่อง
-                timeout: 5000 
+                enableHighAccuracy: true, 
+                maximumAge: 0, 
+                timeout: 10000 // เพิ่มเวลา Timeout ให้ชิปดาวเทียมทำงานได้เต็มที่
             }
         );
-    } else {
-        fetchWeatherData(defaultLat, defaultLon);
     }
+
+    // 1. เริ่มจับสัญญาณครั้งแรก
+    initWatch();
+
+    // 2. 🛡️ ระบบ Heartbeat (เช็คชีพจรทุก 10 วินาที)
+    if (gpsRestarter) clearInterval(gpsRestarter);
+    gpsRestarter = setInterval(() => {
+        const now = Date.now();
+        // ถ้าเคยรับสัญญาณได้แล้ว แต่จู่ๆ นิ่งไปเกิน 10 วินาที (10000 ms)
+        if (lastLocationTime !== 0 && (now - lastLocationTime > 10000)) {
+            console.warn("GPS Stalled! ระบบ Android ตัดการทำงาน... ทำการ Restart GPS ใหม่");
+            initWatch(); // สั่งรีสตาร์ทตัวดึงสัญญาณใหม่ทันที
+        }
+    }, 10000);
 }
 
-startSmoothTracking();
+startRobustTracking();
+
+// ป้องกันจอดับและบังคับให้ CPU ทำงานตลอดเวลา (Screen Wake Lock API)
+if ('wakeLock' in navigator) {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+            console.error('Wake Lock error:', err);
+        }
+    };
+    requestWakeLock();
+    document.addEventListener('visibilitychange', () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            requestWakeLock();
+        }
+    });
+}
 
 
 // ==========================================
