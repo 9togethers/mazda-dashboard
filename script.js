@@ -169,7 +169,7 @@ if ('wakeLock' in navigator) {
 
 
 // ==========================================
-// 4. ระบบเปิดแอป (Hybrid App Links & Intents สำหรับ App โดยเฉพาะ)
+// 4. ระบบเปิดแอป (Android Explicit Intents แบบสมบูรณ์)
 // ==========================================
 function openApp(appName) {
     console.log("Opening App: ", appName);
@@ -182,22 +182,26 @@ function openApp(appName) {
             window.location.href = 'intent:#Intent;action=android.settings.WIFI_SETTINGS;end';
             break;
         case 'gmail':
-            window.location.href = 'mailto:';
+            // สั่งเปิดหน้า Inbox หลักของ Gmail (ไม่ไปหน้า Compose แล้ว)
+            window.location.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.gm;end';
             break;
         case 'maps':
-            window.location.href = 'intent://#Intent;package=com.google.android.apps.maps;scheme=https;end';
+            // สั่งเปิด Google Maps เข้าโหมด Driving (Free Navigation / Dashboard)
+            window.location.href = 'intent://?free=1&mode=d#Intent;scheme=google.navigation;package=com.google.android.apps.maps;end';
             break;
         case 'youtube':
-            window.location.href = 'intent://#Intent;package=com.google.android.youtube;scheme=https;end';
+            // เปิดหน้าแรกของ YouTube
+            window.location.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.youtube;end';
             break;
         case 'ytmusic':
-            window.location.href = 'intent://#Intent;package=com.google.android.apps.youtube.music;scheme=https;end';
+            // เปิดหน้าแรกของ YouTube Music
+            window.location.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.youtube.music;end';
             break;
         case 'evernote':
-            window.location.href = 'intent://#Intent;package=com.evernote;scheme=https;end';
+            window.location.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.evernote;end';
             break;
         case 'discord':
-            window.location.href = 'intent://#Intent;package=com.discord;scheme=https;end';
+            window.location.href = 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.discord;end';
             break;
         default:
             console.warn("App link not configured.");
