@@ -31,14 +31,14 @@ const hereApiKey = '96vX5AbeHZJ2iC6W_nWGO4ZGFDRMAfn7yH00hPfUgeE';
 // ชั้นที่ 1: โครงสร้างแผนที่พื้นหลัง (อัปเกรดเป็น v3)
 const hereBaseUrl = `https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?style=lite.night&apiKey=${hereApiKey}`;
 L.tileLayer(hereBaseUrl, {
-    maxZoom: 19,
+    maxZoom: 18,
     attribution: '© HERE Maps'
 }).addTo(map);
 
 // ชั้นที่ 2: เส้นจราจร (อัปเกรดเป็น v3)
 const hereTrafficUrl = `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`;
 L.tileLayer(hereTrafficUrl, {
-    maxZoom: 19,
+    maxZoom: 18,
     opacity: 0.8 // ปรับความสว่างของเส้นรถติด (0.1 - 1.0)
 }).addTo(map);
 
