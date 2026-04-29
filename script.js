@@ -28,18 +28,16 @@ const map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLon
 // 🌟 นำ API Key ของ HERE ที่ได้จากขั้นตอนแรก มาใส่ในเครื่องหมายคำพูดด้านล่างนี้ครับ
 const hereApiKey = '96vX5AbeHZJ2iC6W_nWGO4ZGFDRMAfn7yH00hPfUgeE';
 
-// ชั้นที่ 1: โครงสร้างแผนที่พื้นหลัง (โหมดกลางคืนแบบมินิมอล)
-const hereBaseUrl = `https://{s}.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/reduced.night/{z}/{x}/{y}/256/png8?apiKey=${hereApiKey}`;
+// ชั้นที่ 1: โครงสร้างแผนที่พื้นหลัง (อัปเกรดเป็น v3)
+const hereBaseUrl = `https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`;
 L.tileLayer(hereBaseUrl, {
-    subdomains: ['1', '2', '3', '4'],
     maxZoom: 19,
     attribution: '© HERE Maps'
 }).addTo(map);
 
-// ชั้นที่ 2: เส้นจราจร (นำมาซ้อนทับแผนที่พื้นหลังอีกที)
-const hereTrafficUrl = `https://{s}.traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.night/{z}/{x}/{y}/256/png8?apiKey=${hereApiKey}`;
+// ชั้นที่ 2: เส้นจราจร (อัปเกรดเป็น v3)
+const hereTrafficUrl = `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`;
 L.tileLayer(hereTrafficUrl, {
-    subdomains: ['1', '2', '3', '4'],
     maxZoom: 19,
     opacity: 0.8 // ปรับความสว่างของเส้นรถติด (0.1 - 1.0)
 }).addTo(map);
