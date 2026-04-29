@@ -36,7 +36,7 @@ L.tileLayer(hereBaseUrl, {
 }).addTo(map);
 
 // ชั้นที่ 2: เส้นจราจร (อัปเกรดเป็น v3)
-const hereTrafficUrl = `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=lite.night&apiKey=${hereApiKey}`;
+const hereTrafficUrl = `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`;
 L.tileLayer(hereTrafficUrl, {
     maxZoom: 19,
     opacity: 0.8 // ปรับความสว่างของเส้นรถติด (0.1 - 1.0)
