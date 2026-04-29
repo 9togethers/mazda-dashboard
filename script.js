@@ -17,18 +17,34 @@ updateTime();
 
 
 // ==========================================
-// 2. ระบบแผนที่ (Leaflet + CartoDB Dark Mode)
+// 2. ระบบแผนที่ (Leaflet + HERE Maps & Traffic)
 // ==========================================
 const defaultLat = 13.7563;
 const defaultLon = 100.5018;
 
-const map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLon], 14);
+// ปรับระยะซูมเริ่มต้นเป็น 16 (ใกล้ขึ้นกว่าเดิม)
+const map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLon], 16);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap & CartoDB',
-    maxZoom: 19
+// 🌟 นำ API Key ของ HERE ที่ได้จากขั้นตอนแรก มาใส่ในเครื่องหมายคำพูดด้านล่างนี้ครับ
+const hereApiKey = '96vX5AbeHZJ2iC6W_nWGO4ZGFDRMAfn7yH00hPfUgeE';
+
+// ชั้นที่ 1: โครงสร้างแผนที่พื้นหลัง (โหมดกลางคืนแบบมินิมอล)
+const hereBaseUrl = `https://{s}.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/reduced.night/{z}/{x}/{y}/256/png8?apiKey=${hereApiKey}`;
+L.tileLayer(hereBaseUrl, {
+    subdomains: ['1', '2', '3', '4'],
+    maxZoom: 19,
+    attribution: '© HERE Maps'
 }).addTo(map);
 
+// ชั้นที่ 2: เส้นจราจร (นำมาซ้อนทับแผนที่พื้นหลังอีกที)
+const hereTrafficUrl = `https://{s}.traffic.maps.ls.hereapi.com/maptile/2.1/traffictile/newest/normal.night/{z}/{x}/{y}/256/png8?apiKey=${hereApiKey}`;
+L.tileLayer(hereTrafficUrl, {
+    subdomains: ['1', '2', '3', '4'],
+    maxZoom: 19,
+    opacity: 0.8 // ปรับความสว่างของเส้นรถติด (0.1 - 1.0)
+}).addTo(map);
+
+// จุดกระพริบตำแหน่งรถ
 const customIcon = L.divIcon({
     className: 'custom-icon',
     html: '<div class="pulse-marker"></div>',
@@ -37,7 +53,6 @@ const customIcon = L.divIcon({
 });
 
 let userMarker = L.marker([defaultLat, defaultLon], { icon: customIcon }).addTo(map);
-
 
 // ==========================================
 // 3. ระบบระบุตำแหน่ง (Self-Healing GPS + Fallback แก้ไข Logic สมบูรณ์)
