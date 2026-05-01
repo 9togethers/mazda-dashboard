@@ -53,25 +53,42 @@ body {
 
 /* --- Animated Mesh Gradient --- */
 /* --- Animated Mesh Gradient --- */
+/* --- Animated Mesh Gradient (วิ่งทั่วจอ) --- */
 .mesh-bg {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
     z-index: -1; 
-    background-color: var(--bg-color); /* สลับสีพื้นอัตโนมัติตาม Day/Night */
+    background-color: var(--bg-color); 
     
-    /* วางแสงสีเทาไว้ซ้ายบน และแสงสีทองพรีเมียมไว้ขวาล่างซ้อนกัน */
+    /* สร้างก้อนแสงไว้ตรงกลาง (เราจะใช้การขยับ position แทน) */
     background-image: 
-        radial-gradient(circle at 20% 10%, var(--mesh-grey) 0%, transparent 60%),
-        radial-gradient(circle at 80% 90%, var(--mesh-gold) 0%, transparent 65%);
+        radial-gradient(circle at center, var(--mesh-grey) 0%, transparent 55%),
+        radial-gradient(circle at center, var(--mesh-gold) 0%, transparent 60%);
         
-    /* สั่งให้วิ่งแอนิเมชันตลอดเวลา วนลูปไปกลับแบบนุ่มนวล 8 วินาที */
-    animation: meshFlow 8s ease-in-out infinite alternate; 
+    /* 🚨 ทริคสำคัญ: ขยายขนาดรูปให้ใหญ่กว่าจอ 2.5 เท่า เพื่อให้แสงวิ่งได้กว้างขึ้น */
+    background-size: 250% 250%;
+    
+    /* ตั้งจุดเริ่มต้น: เทาอยู่มุมซ้ายบน (0% 0%), ทองอยู่มุมขวาล่าง (100% 100%) */
+    background-position: 0% 0%, 100% 100%;
+    
+    /* ปรับเวลาเป็น 25 วินาที ให้แสงลอยไปมาแบบช้าๆ นุ่มนวล ดูพรีเมียมและไม่รบกวนสายตาตอนขับรถ */
+    animation: meshFlow 25s ease-in-out infinite alternate; 
     transition: background-color 0.5s ease;
 }
 
-/* แอนิเมชันการขยับของก้อนสี Mesh */
+/* แอนิเมชันสั่งให้ก้อนแสงวิ่งสลับมุมกันไปมาทั่วจอ */
 @keyframes meshFlow {
-    0% { transform: scale(1) translate(0px, 0px); opacity: 0.8; }
-    100% { transform: scale(1.15) translate(-30px, 20px); opacity: 1; }
+    0% { 
+        background-position: 0% 0%, 100% 100%; 
+    }
+    33% { 
+        background-position: 100% 0%, 0% 100%; 
+    }
+    66% { 
+        background-position: 100% 100%, 0% 0%; 
+    }
+    100% { 
+        background-position: 0% 100%, 100% 0%; 
+    }
 }
 
 /* 🚨 ดัน UI ทั้งหมดให้ลอยอยู่เหนือรถ */
