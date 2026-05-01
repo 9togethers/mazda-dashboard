@@ -424,3 +424,8 @@ function initSpeedometer() {
 }
 
 initSpeedometer();
+
+// สั่งให้รีเฟรชหน้าเว็บอัตโนมัติทันทีที่อินเทอร์เน็ตกลับมาเชื่อมต่อสำเร็จ
+window.addEventListener('online', function() {
+    window.location.reload();
+});
