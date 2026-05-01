@@ -133,7 +133,7 @@ body {
 .map-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; color: var(--text-main); }
 .nav-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .nav-btn:hover { background: #e68600; transform: scale(1.05); }
-#map { flex: 1; border-radius: 16px; background: rgba(0,0,0,0.1); z-index: 1; }
+#map { flex: 1; border-radius: 16px; background: transparent; z-index: 1; }
 
 .apps-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 16px; }
 .app-card { border-radius: 20px; padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; cursor: pointer; }

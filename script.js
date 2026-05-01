@@ -29,15 +29,14 @@ const map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLon
 const hereApiKey = '96vX5AbeHZJ2iC6W_nWGO4ZGFDRMAfn7yH00hPfUgeE';
 
 // ชั้นที่ 1: โครงสร้างแผนที่พื้นหลัง (อัปเกรดเป็น v3)
-const hereBaseUrl = `https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?style=lite.night&apiKey=${hereApiKey}`;
-L.tileLayer(hereBaseUrl, {
+let baseLayer = L.tileLayer(`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?style=lite.night&apiKey=${hereApiKey}`, {
     maxZoom: 18,
-    attribution: '© HERE Maps'
+    attribution: '&copy; HERE Maps',
+    opacity: 0.4 // 🚨 เพิ่มบรรทัดนี้ครับ! ปรับความทะลุได้ตั้งแต่ 0.1 (ใสแจ๋ว) ถึง 1.0 (ทึบสนิท)
 }).addTo(map);
 
 // ชั้นที่ 2: เส้นจราจร (อัปเกรดเป็น v3)
-const hereTrafficUrl = `https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`;
-L.tileLayer(hereTrafficUrl, {
+let trafficLayer = L.tileLayer(`https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=explore.night&apiKey=${hereApiKey}`, {
     maxZoom: 18,
     opacity: 0.8 // ปรับความสว่างของเส้นรถติด (0.1 - 1.0)
 }).addTo(map);
@@ -429,3 +428,14 @@ initSpeedometer();
 window.addEventListener('online', function() {
     window.location.reload();
 });
+
+// ฟังก์ชันเปลี่ยนสีแผนที่ตามโหมด Day/Night
+function updateMapTheme(theme) {
+    if (!baseLayer || !trafficLayer) return; 
+
+    let baseStyle = theme === 'dark' ? 'lite.night' : 'lite.day';
+    let trafficStyle = theme === 'dark' ? 'explore.night' : 'explore.day';
+
+    baseLayer.setUrl(`https://maps.hereapi.com/v3/base/mc/{z}/{x}/{y}/png8?style=${baseStyle}&apiKey=${hereApiKey}`);
+    trafficLayer.setUrl(`https://traffic.maps.hereapi.com/v3/flow/mc/{z}/{x}/{y}/png8?style=${trafficStyle}&apiKey=${hereApiKey}`);
+}
