@@ -135,7 +135,7 @@ body {
 .nav-btn:hover { background: #e68600; transform: scale(1.05); }
 #map { flex: 1; border-radius: 16px; background: transparent; z-index: 1; }
 
-.apps-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 16px; }
+.apps-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px; }
 .app-card { border-radius: 20px; padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; cursor: pointer; }
 .app-card h4 { font-size: 15px; font-weight: 500; z-index: 3; color: var(--text-main); position: relative; }
 .media-card { background: var(--panel-bg); }
