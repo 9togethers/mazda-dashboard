@@ -20,7 +20,7 @@
     /* 🌟 Fixed Mesh Colors (Locked Accent) */
     /* เติมรหัส 40 (25%) และ 26 (15%) ท้าย Hex เพื่อให้สีมันโปร่งแสงและฟุ้งเข้ากับพื้นหลัง */
     --mesh-grey: #95959540; /* First Mesh Color */
-    --mesh-gold: #FCAC0026; /* Second Mesh Color (Premium Gold) */
+    --mesh-gold: #fcac0080; /* Second Mesh Color (Premium Gold) */
 }
 
 [data-theme="light"] {
