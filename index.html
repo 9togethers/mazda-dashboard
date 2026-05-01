@@ -3,29 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mazda 2 Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap" rel="stylesheet">
+    <title>Mazda 2 Dashboard Premium</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Web App Manifest -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
-    <link rel="apple-touch-icon" href="mazda2.png"> 
-    <link rel="icon" type="image/png" href="icon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,200,0,0" />
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-mode">
+<body class="dark-mode" data-theme="dark">
+    <!-- ชั้นล่างสุด: พื้นหลังตาข่าย (Mesh Background) -->
     <div class="mesh-bg"></div>
 
+    <!-- ชั้นกลาง: รูปรถ Mazda 2 ลอยอยู่หลังสุด (แยกตัวออกจาก UI) -->
+    <div id="car-3d-container">
+        <div class="car-image"></div>
+    </div>
+
+    <!-- ชั้นบนสุด: UI Dashboard กระจกฝ้าทั้งหมด -->
     <div class="dashboard">
         
+        <!-- Sidebar ด้านซ้าย -->
         <nav class="sidebar">
             <div class="nav-top">
                 <div class="menu-item active"><span class="material-symbols-outlined">home</span></div>
@@ -40,12 +47,13 @@
                 </div>
                 
                 <div class="theme-toggle">
-                    <div class="theme-mode" onclick="toggleTheme('light')">Light</div>
-                    <div class="theme-mode active" onclick="toggleTheme('dark')">Dark</div>
+                    <div class="theme-mode" id="btn-light" onclick="toggleTheme('light')">Light</div>
+                    <div class="theme-mode active" id="btn-dark" onclick="toggleTheme('dark')">Dark</div>
                 </div>
             </div>
         </nav>
 
+        <!-- แผงตรงกลาง (เหลือแค่นาฬิกา, ข้อความต้อนรับ, ปฏิทิน) -->
         <main class="center-panel">
             <div class="top-widget">
                 <div class="clock-info" style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding-right: 16px; border-right: 1px solid rgba(255,255,255,0.1);">
@@ -57,18 +65,30 @@
                     <span id="weather-text">Fetching location...</span>
                 </div>
             </div>
+
+            <!-- 🚨 ส่วนที่เพิ่มใหม่ (กล่องแดงและเหลือง) -->
+        <div class="hero-stats">
+            <!-- กล่องแดง: Greeting -->
+            <div class="greeting-hero">
+                <h1 id="dynamic-greeting">GOOD MORNING</h1>
+                <div class="brand-subtitle"></div>
+            </div>
             
-            <div id="car-3d-container">
-                <div class="car-wrapper">
-                    <div class="car-image-container">
-                        <img src="mazda2.png" alt="Mazda 2" class="car-image">
-                    </div>
-                <div class="car-shadow"></div>
+            <!-- กล่องเหลือง: Speedometer -->
+            <div class="speed-widget">
+                <span class="speed-label">SPEED</span>
+                <div class="speed-value">
+                    <span id="speed-number">0</span>
+                    <span class="speed-unit">KM/H</span>
                 </div>
             </div>
+        </div>
+
+            <!-- ดันปฏิทินลงไปข้างล่าง เพื่อโชว์รูปรถให้เต็มตา -->
+            <div style="flex-grow: 1;"></div> 
 
             <div class="greeting-box">
-                <h2>WELCOME BACK</h2>
+                <h2 style="text-transform: uppercase;">black and white is the language of now</h2>
                 <p>Ready for the drive. Check your schedule and current route status below before hitting the road.</p>
             </div>
 
@@ -90,6 +110,7 @@
             </div>
         </main>
 
+        <!-- แผงขวามือ (แผนที่, Media, Apps) -->
         <aside class="right-panel">
             <div class="map-container">
                 <div class="map-header">
@@ -126,7 +147,25 @@
 
     </div>
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Script สำหรับสลับ Theme -->
+    <script>
+        function toggleTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            
+            // อัปเดตปุ่มใน Sidebar
+            document.getElementById('btn-dark').classList.remove('active');
+            document.getElementById('btn-light').classList.remove('active');
+            
+            if(theme === 'dark') {
+                document.getElementById('btn-dark').classList.add('active');
+            } else {
+                document.getElementById('btn-light').classList.add('active');
+            }
+        }
+    </script>
 </body>
-</html> 
+</html>

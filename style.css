@@ -1,156 +1,116 @@
 /* ======================================================
-   CSS VARIABLES (ระบบสลับสี Day / Night)
+   1. CSS VARIABLES (ระบบสลับสี Day / Night)
 ====================================================== */
 :root {
-    /* Dark Mode (Default) */
-    --bg-color: #050505;
-    --panel-bg: rgba(26, 26, 30, 0.5);
-    --panel-solid: #1A1A1E; /* สีทึบสำหรับทำ Fade Gradient */
+    /* Dark Mode */
+    --bg-color: #121418; /* ⬛ Main Background (Dark) */
+    --panel-bg: rgba(30, 30, 35, 0.4);
+    --panel-solid: #1A1A1E; 
     --text-main: #E8E8E8;
     --text-dim: #808080;
-    --accent: #FF9500;
-    --border: rgba(255, 255, 255, 0.05);
+    --accent: #FCAC00; /* เปลี่ยนสี Accent หลักของเว็บให้เป็นสีทองพรีเมียมด้วยเลย */
+    --border: rgba(255, 255, 255, 0.08);
+    /* 🌟 เพิ่มตัวแปรโลโก้โหมดมืด */
+    --logo-image: url('logo_dark.png');
     
-    /* ตัวแปรเงารถ */
-    --car-shadow-hard: rgba(0, 0, 0, 0.8);
-    --car-shadow-soft: rgba(0, 0, 0, 0.9);
+    /* ตัวแปรรูปรถและเงา */
+    --car-image: url('car-dark.png');
+    --car-shadow: rgba(0, 0, 0, 0.9);
+    
+    /* 🌟 Fixed Mesh Colors (Locked Accent) */
+    /* เติมรหัส 40 (25%) และ 26 (15%) ท้าย Hex เพื่อให้สีมันโปร่งแสงและฟุ้งเข้ากับพื้นหลัง */
+    --mesh-grey: #95959540; /* First Mesh Color */
+    --mesh-gold: #FCAC0026; /* Second Mesh Color (Premium Gold) */
 }
 
 [data-theme="light"] {
     /* Light Mode */
-    --bg-color: #F5F5F7; 
+    --bg-color: #F4F4F4; /* ⬜ Main Background (Light) */
     --panel-bg: rgba(255, 255, 255, 0.65); 
-    --panel-solid: #FFFFFF; /* สีขาวทึบสำหรับทำ Fade Gradient ให้กลืนไปกับบัตร */
+    --panel-solid: #FFFFFF; 
     --text-main: #1D1D1F; 
     --text-dim: #86868B; 
     --border: rgba(0, 0, 0, 0.08); 
     
-    /* ตัวแปรเงารถโหมดสว่าง (ลดความดำลงให้เป็นเงาธรรมชาติ) */
-    --car-shadow-hard: rgba(0, 0, 0, 0.15);
-    --car-shadow-soft: rgba(0, 0, 0, 0.1);
+    --car-image: url('car-light.png');
+    --car-shadow: rgba(0, 0, 0, 0.15);
+    --logo-image: url('logo_light.png');
+    
+    /* 💡 ไม่ต้องตั้งค่าสี Mesh ใหม่ เพราะมันจะดึงค่า --mesh-grey และ --mesh-gold จากด้านบนมาใช้ตลอดเวลา! */
 }
 
 /* ======================================================
-   BASE STYLES
+   2. BASE STYLES & BACKGROUND
 ====================================================== */
-* {
-    margin: 0; padding: 0; box-sizing: border-box;
-    font-family: 'Inter', sans-serif; user-select: none;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; }
 
 body {
     background-color: var(--bg-color); 
     color: var(--text-main);
-    height: 100vh; width: 100vw; overflow: hidden;
-    position: relative;
-    /* เพิ่ม Transition ให้ตอนสลับโหมดสีค่อยๆ เปลี่ยนแบบนุ่มนวล */
+    height: 100vh; width: 100vw; overflow: hidden; position: relative;
     transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 /* --- Animated Mesh Gradient --- */
+/* --- Animated Mesh Gradient --- */
 .mesh-bg {
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    z-index: -1;
-    background-color: var(--bg-color); /* เปลี่ยนสีตามโหมด */
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+    z-index: -1; 
+    background-color: var(--bg-color); /* สลับสีพื้นอัตโนมัติตาม Day/Night */
+    
+    /* วางแสงสีเทาไว้ซ้ายบน และแสงสีทองพรีเมียมไว้ขวาล่างซ้อนกัน */
     background-image: 
-        radial-gradient(circle at 95% 40%, rgba(255, 69, 0, 0.25) 0%, transparent 45%),
-        radial-gradient(circle at 10% 80%, rgba(255, 149, 0, 0.15) 0%, transparent 40%);
-    animation: meshBreathe 3s ease-in-out infinite alternate; 
+        radial-gradient(circle at 20% 10%, var(--mesh-grey) 0%, transparent 60%),
+        radial-gradient(circle at 80% 90%, var(--mesh-gold) 0%, transparent 65%);
+        
+    /* สั่งให้วิ่งแอนิเมชันตลอดเวลา วนลูปไปกลับแบบนุ่มนวล 8 วินาที */
+    animation: meshFlow 8s ease-in-out infinite alternate; 
     transition: background-color 0.5s ease;
 }
 
-@keyframes meshBreathe {
-    0% { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.05); opacity: 1; }
+/* แอนิเมชันการขยับของก้อนสี Mesh */
+@keyframes meshFlow {
+    0% { transform: scale(1) translate(0px, 0px); opacity: 0.8; }
+    100% { transform: scale(1.15) translate(-30px, 20px); opacity: 1; }
 }
 
-.dashboard {
-    display: flex; height: 100%; padding: 20px; gap: 20px;
+/* 🚨 ดัน UI ทั้งหมดให้ลอยอยู่เหนือรถ */
+.dashboard { 
+    display: flex; height: 100%; padding: 20px; gap: 20px; 
+    position: relative; 
+    z-index: 10; 
 }
 
 /* ======================================================
-   GLASSMORPHISM PANELS (กระจกฝ้าโปร่งแสง)
-====================================================== 
-*/
+   3. GLASSMORPHISM PANELS (กระจกฝ้าโปร่งแสง)
+====================================================== */
 .sidebar, .top-widget, .calendar-widget, .map-container, .app-card {
     background: var(--panel-bg);
-    backdrop-filter: blur(24px); 
-    -webkit-backdrop-filter: blur(24px); 
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); 
     border: 1px solid var(--border); 
-    transition: background 0.5s ease, border 0.5s ease;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    transition: background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease;
 }
 
 /* --- Sidebar --- */
-.sidebar {
-    width: 90px; 
-    border-radius: 24px;
-    display: flex; flex-direction: column; justify-content: space-between;
-    align-items: center; padding: 24px 0;
-    flex-shrink: 0; 
-}
-
-.nav-top, .nav-bottom {
-    display: flex; flex-direction: column; gap: 24px; align-items: center; width: 100%;
-}
-
-.menu-item {
-    width: 48px; height: 48px;
-    background: rgba(128, 128, 128, 0.1); 
-    border-radius: 14px;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--text-dim); cursor: pointer; transition: 0.3s;
-}
-
-.menu-item.active, .menu-item:hover { 
-    color: var(--accent); 
-    background: rgba(255, 149, 0, 0.1); 
-}
+.sidebar { width: 90px; border-radius: 24px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 24px 0; flex-shrink: 0; }
+.nav-top, .nav-bottom { display: flex; flex-direction: column; gap: 24px; align-items: center; width: 100%; }
+.menu-item { width: 48px; height: 48px; background: rgba(128, 128, 128, 0.1); border-radius: 14px; display: flex; justify-content: center; align-items: center; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+.menu-item.active, .menu-item:hover { color: var(--accent); background: rgba(255, 149, 0, 0.1); }
 .menu-item i { font-size: 24px; } 
 
-.profile-pic img {
-    width: 44px; height: 44px; border-radius: 12px; object-fit: cover;
-}
-
-.theme-toggle {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    margin-top: 10px;
-}
-
-.theme-mode {
-    font-size: 13px;
-    color: var(--text-dim);
-    writing-mode: vertical-rl; 
-    transform: rotate(180deg); 
-    padding: 16px 8px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-    letter-spacing: 1px;
-}
-
-.theme-mode.active {
-    color: var(--accent);
-    border: 1px solid rgba(255, 149, 0, 0.5);
-    background: rgba(255, 149, 0, 0.1);
-}
+.profile-pic img { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; }
+.theme-toggle { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; }
+.theme-mode { font-size: 13px; color: var(--text-dim); writing-mode: vertical-rl; transform: rotate(180deg); padding: 16px 8px; border-radius: 12px; cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+.theme-mode.active { color: var(--accent); border: 1px solid rgba(255, 149, 0, 0.5); background: rgba(255, 149, 0, 0.1); }
 
 /* --- Center Panel --- */
-.center-panel {
-    flex: 1; 
-    display: flex; flex-direction: column; gap: 20px;
-    min-width: 0; 
-}
-
-.top-widget {
-    border-radius: 16px; padding: 12px 24px;
-    display: inline-flex; align-items: center; justify-content: center; width: fit-content; 
-    color: var(--text-main); font-size: 14px;
-}
-
+.center-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.top-widget { border-radius: 16px; padding: 12px 24px; display: inline-flex; align-items: center; justify-content: center; width: fit-content; color: var(--text-main); font-size: 14px; }
 .weather-info { display: flex; align-items: center; gap: 8px; }
-.weather-info .material-symbols-outlined { font-size: 20px; display: flex; }
+.weather-info .material-symbols-outlined { font-size: 20px; }
 
-.greeting-box h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; color: var(--text-main); }
+.greeting-box h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; color: var(--text-main); }
 .greeting-box p { font-size: 12px; color: var(--text-dim); line-height: 1.5; max-width: 90%; }
 
 .calendar-widget { border-radius: 20px; padding: 20px; }
@@ -159,197 +119,133 @@ body {
 .task { border-left: 2px solid var(--accent); padding-left: 12px; margin-bottom: 12px; }
 .task-time { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
 .task-detail { font-size: 14px; color: var(--text-main); }
+.task-list { max-height: 150px; overflow-y: auto; padding-right: 8px; }
 
-/* --- Calendar Categories (Today / Upcoming) --- */
-.task-category {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-}
-
-/* --- ป้องกันปฏิทินทะลุกรอบ (Inner Scroll) --- */
-.task-list {
-    max-height: 150px; /* ล็อคความสูงให้โชว์ประมาณ 2 นัดหมายครึ่ง (เพื่อบอกเป็นนัยว่าเลื่อนได้) */
-    overflow-y: auto;
-    padding-right: 8px; /* เว้นที่ให้ Scrollbar */
-}
-
-/* ปรับแต่ง Scrollbar ให้ดูพรีเมียม (บางและโปร่งแสง) */
-.task-list::-webkit-scrollbar {
-    width: 4px;
-}
-.task-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-.task-list::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.2);
-    border-radius: 10px;
-}
-.task-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 149, 0, 0.5); /* โฮเวอร์แล้วเป็นสีส้ม */
-}
+/* Custom Scrollbar */
+.task-list::-webkit-scrollbar { width: 4px; }
+.task-list::-webkit-scrollbar-track { background: transparent; }
+.task-list::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.2); border-radius: 10px; }
+.task-list::-webkit-scrollbar-thumb:hover { background: rgba(255, 149, 0, 0.5); }
 
 /* --- Right Panel --- */
-.right-panel {
-    width: 600px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; 
-}
-
-.map-container {
-    flex: 1.5; border-radius: 24px; padding: 20px;
-    display: flex; flex-direction: column; gap: 16px; position: relative;
-}
+.right-panel { width: 600px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
+.map-container { flex: 1.5; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative; }
 .map-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; color: var(--text-main); }
-.nav-btn {
-    background: var(--accent); color: #fff; border: none; padding: 8px 16px;
-    border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
-}
+.nav-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
 .nav-btn:hover { background: #e68600; transform: scale(1.05); }
-
 #map { flex: 1; border-radius: 16px; background: rgba(0,0,0,0.1); z-index: 1; }
 
-/* Bottom Apps Grid */
-.apps-grid {
-    flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 16px;
-}
-
-/* Bottom Apps Grid */
-.apps-grid {
-    flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 16px;
-}
-
-.app-card {
-    border-radius: 20px; padding: 20px; 
-    display: flex; flex-direction: column; position: relative; overflow: hidden; cursor: pointer;
-}
+.apps-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 16px; }
+.app-card { border-radius: 20px; padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; cursor: pointer; }
 .app-card h4 { font-size: 15px; font-weight: 500; z-index: 3; color: var(--text-main); position: relative; }
-
-/* โครงสร้างใหม่ของ YouTube & Music */
-.media-card {
-    background: var(--panel-bg);
-}
-
-/* ชั้นที่ 1: รูปภาพอยู่ด้านล่างสุด ไม่มี Overlay สีดำบัง */
-.media-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background-size: cover; background-position: center bottom; 
-    z-index: 1; transition: transform 0.4s ease;
-}
-
-/* ชั้นที่ 2: Gradient ทับจากบนลงล่าง เพื่อซ่อนขอบรูปและให้ตัวหนังสืออ่านง่าย */
-.media-card::after {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    /* ไล่สีจากทึบ (10%) ลงมาโปร่งใส (60%) */
-    background: linear-gradient(to bottom, var(--panel-solid) 10%, transparent 60%);
-    z-index: 2;
-}
-
-/* รูปภาพ Background */
+.media-card { background: var(--panel-bg); }
+.media-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-size: cover; background-position: center bottom; z-index: 1; transition: transform 0.4s ease; }
+.media-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, var(--panel-solid) 10%, transparent 60%); z-index: 2; }
 .yt-bg::before { background-image: url('youtube.jpg'); }
 .ytm-bg::before { background-image: url('music.jpg'); }
-
-.media-card:hover::before { transform: scale(1.05); } /* Hover แล้วรูปขยาย */
+.media-card:hover::before { transform: scale(1.05); }
 .works-card { gap: 12px; cursor: default; } 
-
-.work-btn {
-    flex: 1; 
-    background: var(--panel-bg); 
-    padding: 10px 14px; 
-    border-radius: 12px; 
-    font-size: 13px;
-    display: flex; align-items: center; gap: 10px; 
-    cursor: pointer; transition: 0.2s;
-    color: var(--text-main);
-    border: 1px solid var(--border);
-}
-
-.work-btn:hover { 
-    background: rgba(255, 149, 0, 0.15); 
-    color: var(--accent); 
-    border: 1px solid rgba(255, 149, 0, 0.3);
-}
-.work-btn img { width: 16px; }
-.work-btn i { font-size: 18px; }
+.work-btn { flex: 1; background: var(--panel-bg); padding: 10px 14px; border-radius: 12px; font-size: 13px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; color: var(--text-main); border: 1px solid var(--border); }
+.work-btn:hover { background: rgba(255, 149, 0, 0.15); color: var(--accent); border: 1px solid rgba(255, 149, 0, 0.3); }
 
 /* --- Custom Map Marker --- */
-.pulse-marker {
-    background: var(--accent); width: 16px; height: 16px;
-    border-radius: 50%; border: 3px solid #1A1A1E;
-    box-shadow: 0 0 15px rgba(255, 149, 0, 0.8);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(255, 149, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); }
-}
+.pulse-marker { background: var(--accent); width: 16px; height: 16px; border-radius: 50%; border: 3px solid #1A1A1E; box-shadow: 0 0 15px rgba(255, 149, 0, 0.8); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 149, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); } }
 
 /* ======================================================
-   2.5D PREMIUM SHOWCASE
+   4. CAR SHOWCASE (พื้นหลังสุด กึ่งกลางจอ)
 ====================================================== */
 #car-3d-container {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    animation: slideIn 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-.car-wrapper {
-    position: relative;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    width: 100%; max-width: 550px; 
-    overflow: visible; /* ปลดล็อค ไม่ให้เงาโดนตัดกรอบ */
-}
-
-.car-image-container {
-    position: relative; width: 100%; display: flex; justify-content: center;
-    overflow: visible; /* ปลดล็อค */
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0; /* อยู่กึ่งกลางระหว่าง mesh (-1) และ dashboard (10) */
+    pointer-events: none; /* ป้องกันไม่ให้รูปรถบังการคลิกปุ่มต่างๆ ของ UI */
+    overflow: hidden;
 }
 
 .car-image {
-    width: 100%; max-height: 250px; object-fit: contain; z-index: 2;
-    animation: breathing 6s ease-in-out infinite;
-    /* เรียกใช้ตัวแปรเงา (เปลี่ยนตามโหมด) */
-    filter: drop-shadow(0px 20px 20px var(--car-shadow-hard)) 
-            drop-shadow(0px 0px 40px rgba(255, 149, 0, 0.1));
-}
-
-.car-shadow {
-    position: absolute; bottom: -25px; width: 90%; height: 50px;
-    /* เรียกใช้ตัวแปรเงา (เปลี่ยนตามโหมด) */
-    background: radial-gradient(ellipse at center, var(--car-shadow-soft) 0%, rgba(255, 149, 0, 0.15) 40%, rgba(0,0,0,0) 75%);
-    z-index: 1; filter: blur(15px);
-    animation: shadowBreathing 6s ease-in-out infinite;
-}
-
-/* ลบโค้ด Shimmer (::after) ออกไปเลยครับ เพื่อความคลีนและแก้ปัญหากรอบตัดแสง */
-
-@keyframes breathing {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-}
-
-@keyframes shadowBreathing {
-    0%, 100% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.1); opacity: 0.4; }
+    width: 60%; 
+    max-width: 1300px; 
+    height: 75vh; 
+    background-image: var(--car-image);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0px 40px 40px var(--car-shadow));
+    transition: background-image 0.5s ease;
+    
+    /* ปรับตำแหน่งรถให้สวยงาม */
+    margin-top: 0%; 
+    margin-left: 2%; 
 }
 
 /* ======================================================
-   GPU HARDWARE ACCELERATION (แก้ปัญหาภาพกระพริบ)
+   5. HERO STATS (Greeting & Speedometer)
 ====================================================== */
-.car-image, 
-.car-shadow, 
-.mesh-bg, 
-.pulse-marker {
-    /* สั่งให้ Browser เตรียมตัวล่วงหน้าว่าเลเยอร์นี้จะมีการขยับ */
-    will-change: transform, filter;
-    /* บังคับเปิด GPU Rendering */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    /* ป้องกันการกระพริบของขอบภาพเวลาแอนิเมชันทำงาน */
-    backface-visibility: hidden;
-    -webkit-font-smoothing: subpixel-antialiased;
+.hero-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 35px; /* ระยะห่างระหว่างกล่องแดงกับเหลือง */
+    margin-top: 40px; /* เว้นระยะจาก Top Widget ด้านบน */
+    margin-left: 10px;
+    z-index: 10;
+}
+
+/* --- กล่องแดง (Greeting) --- */
+.greeting-hero h1 {
+    font-size: 64px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-main);
+    margin-bottom: 4px; /* ขยับห่างจากโลโก้นิดนึง */
+    transition: color 0.5s ease;
+}
+
+/* 🚨 ลบ .brand-subtitle ของเดิมทิ้ง แล้วใช้ชุดนี้แทนครับ */
+.brand-subtitle {
+    width: 140px; /* 💡 ปรับความกว้างให้พอดีกับไฟล์โลโก้จริงของคุณโตรุ */
+    height: 24px; /* 💡 ปรับความสูงให้พอดี */
+    background-image: var(--logo-image);
+    background-size: contain;
+    background-position: left center;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease;
+}
+
+/* --- กล่องเหลือง (Speed) --- */
+.speed-widget {
+    display: flex;
+    flex-direction: column;
+}
+
+.speed-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: -5px; /* ดันให้ชิดกับตัวเลขความเร็ว */
+}
+
+.speed-value {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+#speed-number {
+    font-size: 64px; /* ตัวเลขความเร็วเบิ้มๆ */
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -2px;
+    transition: color 0.5s ease;
+}
+
+.speed-unit {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 1px;
 }

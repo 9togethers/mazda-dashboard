@@ -360,3 +360,67 @@ async function fetchCalendarEvents() {
 
 fetchCalendarEvents();
 setInterval(fetchCalendarEvents, 900000);
+
+// ==========================================
+// 1. ระบบ Dynamic Greeting เปลี่ยนคำทักทายตามเวลา
+// ==========================================
+function updateGreeting() {
+    const hour = new Date().getHours();
+    let greeting = "GOOD EVENING";
+    
+    if (hour >= 5 && hour < 12) {
+        greeting = "GOOD MORNING";
+    } else if (hour >= 12 && hour < 18) {
+        greeting = "GOOD AFTERNOON";
+    } else if (hour >= 18 && hour < 22) {
+        greeting = "GOOD EVENING";
+    } else {
+        greeting = "GOOD NIGHT";
+    }
+    
+    document.getElementById('dynamic-greeting').innerText = greeting;
+}
+
+// เรียกใช้ครั้งแรก และตั้งเวลาอัปเดตทุกๆ 1 นาที
+updateGreeting();
+setInterval(updateGreeting, 60000);
+
+// ==========================================
+// 2. ระบบ GPS Speedometer ดึงความเร็วเรียลไทม์
+// ==========================================
+function initSpeedometer() {
+    const speedNumber = document.getElementById('speed-number');
+    
+    // เช็คว่าอุปกรณ์รองรับ GPS หรือไม่
+    if ("geolocation" in navigator) {
+        // ใช้ watchPosition เพื่อรับค่าอัปเดตตลอดเวลาที่รถวิ่ง
+        navigator.geolocation.watchPosition(
+            (position) => {
+                // ค่าที่ได้จาก API คือ เมตรต่อวินาที (m/s)
+                let speedMS = position.coords.speed;
+                
+                // ถ้ารถจอดนิ่ง หรือหาค่าไม่ได้ API จะส่งค่า null กลับมา
+                if (speedMS === null || speedMS < 0) {
+                    speedMS = 0;
+                }
+                
+                // แปลง เมตร/วินาที เป็น กิโลเมตร/ชั่วโมง (KM/H)
+                let speedKMH = Math.round(speedMS * 3.6);
+                speedNumber.innerText = speedKMH;
+            },
+            (error) => {
+                console.warn("GPS Error: ", error.message);
+                speedNumber.innerText = "--"; // ถ้า GPS มีปัญหาให้โชว์ขีด
+            },
+            {
+                enableHighAccuracy: true, // บังคับให้ใช้ GPS แม่นยำสูง (กินแบตหน่อยแต่เป๊ะ)
+                maximumAge: 0,
+                timeout: 5000
+            }
+        );
+    } else {
+        speedNumber.innerText = "N/A"; // ถ้าเบราว์เซอร์ไม่รองรับ
+    }
+}
+
+initSpeedometer();
